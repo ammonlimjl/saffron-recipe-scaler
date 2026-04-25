@@ -1,0 +1,12 @@
+# Python virtual environment — never commit this. It contains your local
+# package installs and is recreated by anyone using requirements.txt.
+venv/
+.venv/
+
+# Python bytecode caches.
+__pycache__/
+*.pyc
+
+# Editor / OS junk.
+.DS_Store
+.vscode/

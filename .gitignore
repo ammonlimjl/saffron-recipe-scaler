@@ -1,0 +1,14 @@
+# Python
+server/venv/
+server/.venv/
+**/__pycache__/
+*.pyc
+
+# Editor / OS junk
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Claude Code local session/settings
+.claude/

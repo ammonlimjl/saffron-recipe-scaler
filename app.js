@@ -657,7 +657,7 @@ function cleanInput(text) {
   return normalizeFractions(text)
     .split(/\r?\n/)
     .map((line) => line.replace(/\s+/g, " ").trim())
-    .filter((line) => line && line.length <= 200 && !JUNK_PATTERNS.some((re) => re.test(line)))
+    .filter((line) => line && line.length <= 500 && !JUNK_PATTERNS.some((re) => re.test(line)))
     .join("\n");
 }
 
@@ -732,6 +732,7 @@ function parseRecipe(rawText) {
   let title = "";
   let servings = null;
   const sections = [];
+  const instructions = [];
   let currentSection = { header: null, ingredients: [] };
   let inIngredientMode = true;
   // Permissive mode kicks in after we see the literal "Ingredients" header.
@@ -761,7 +762,12 @@ function parseRecipe(rawText) {
       }
       continue;
     }
-    if (!inIngredientMode) continue;
+    if (!inIngredientMode) {
+      // Everything past the Instructions header is captured as a step.
+      const trimmed = line.trim();
+      if (trimmed) instructions.push(trimmed);
+      continue;
+    }
     if (isSectionHeader(line)) {
       if (currentSection.ingredients.length > 0) {
         sections.push(currentSection);
@@ -782,7 +788,7 @@ function parseRecipe(rawText) {
   if (currentSection.ingredients.length > 0) {
     sections.push(currentSection);
   }
-  return { title, servings, sections, hasContent: true };
+  return { title, servings, sections, instructions, hasContent: true };
 }
 
 function formatQuantity(q, unit) {
@@ -975,6 +981,18 @@ function renderOutput() {
       bodyParts.push("</div>");
     }
 
+    // Cooking steps (if the source recipe included them).
+    if (parsed.instructions && parsed.instructions.length) {
+      bodyParts.push('<div class="recipe__instructions">');
+      bodyParts.push('<h3 class="recipe__section-header">Instructions</h3>');
+      bodyParts.push('<ol class="recipe__steps">');
+      for (const step of parsed.instructions) {
+        bodyParts.push(`<li class="recipe__step">${escapeHtml(step)}</li>`);
+      }
+      bodyParts.push("</ol>");
+      bodyParts.push("</div>");
+    }
+
     bodyParts.push(
       '<div class="recipe__actions">' +
         '<button type="button" class="btn btn--primary" data-action="copy">' +
@@ -1123,6 +1141,17 @@ function recipeJsonToText(data) {
       }
     }
   }
+
+  // Cooking steps come back from the backend as an array of plain strings.
+  // Emitting them after an "Instructions" header lets parseRecipe pick
+  // them up via the same path used by manually-pasted recipes.
+  if (data.instructions && data.instructions.length) {
+    lines.push("");
+    lines.push("Instructions");
+    for (const step of data.instructions) {
+      lines.push(step);
+    }
+  }
   return lines.join("\n");
 }
 
@@ -1209,6 +1238,15 @@ function buildPlainTextRecipe() {
       if (ing.name) parts.push(ing.name);
       out.push(`\u2022 ${parts.join(" ")}`);
     }
+  }
+
+  // Numbered cooking steps (if any).
+  if (state.parsed.instructions && state.parsed.instructions.length) {
+    out.push("");
+    out.push("Instructions");
+    state.parsed.instructions.forEach((step, i) => {
+      out.push(`${i + 1}. ${step}`);
+    });
   }
 
   out.push("");

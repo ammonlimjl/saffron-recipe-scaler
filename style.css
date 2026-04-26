@@ -34,11 +34,12 @@ body {
   /* Layered: subtle SVG grain (top) + three warm radial glows blending into
      the cream base. Gives editorial-style depth without an actual photo. */
   background-image:
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E"),
-    radial-gradient(ellipse 80% 50% at 50% 0%, rgba(217, 119, 6, 0.18) 0%, transparent 70%),
-    radial-gradient(ellipse 60% 40% at 100% 80%, rgba(217, 119, 6, 0.07) 0%, transparent 60%),
-    radial-gradient(ellipse 50% 50% at 0% 50%, rgba(254, 243, 199, 0.35) 0%, transparent 70%);
-  background-size: 240px 240px, auto, auto, auto;
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.07'/%3E%3C/svg%3E"),
+    radial-gradient(ellipse 90% 45% at 50% 0%, rgba(217, 119, 6, 0.24) 0%, transparent 65%),
+    radial-gradient(ellipse 100% 35% at 50% 35%, rgba(251, 191, 36, 0.10) 0%, transparent 80%),
+    radial-gradient(ellipse 70% 45% at 100% 100%, rgba(217, 119, 6, 0.14) 0%, transparent 65%),
+    radial-gradient(ellipse 55% 55% at 0% 60%, rgba(254, 243, 199, 0.50) 0%, transparent 70%);
+  background-size: 240px 240px, auto, auto, auto, auto;
   background-attachment: fixed;
   color: var(--color-text);
   line-height: 1.5;
@@ -229,9 +230,7 @@ body {
 }
 
 /* Scale section — servings, units, reset.
-   Sticky on desktop so it stays reachable while scrolling through long
-   recipes. (On mobile we rely on the bottom action bar for primary actions
-   and let scale-section scroll naturally to avoid stacking two sticky bars.) */
+   Sits above the output card; scrolls naturally with the page (no sticky). */
 .scale-section {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
@@ -242,14 +241,6 @@ body {
   display: flex;
   flex-direction: column;
   gap: 14px;
-}
-
-@media (min-width: 640px) {
-  .scale-section {
-    position: sticky;
-    top: 16px;
-    z-index: 5;
-  }
 }
 
 .scale-row {

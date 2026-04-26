@@ -1,0 +1,20 @@
+{
+  "name": "PrepFresh — Recipe Scaler & Unit Converter",
+  "short_name": "PrepFresh",
+  "description": "The must-have app for home cooks and meal preppers. Scale any recipe by servings. Convert between cups, grams, ml, oz instantly.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#fdfaf6",
+  "theme_color": "#d97706",
+  "orientation": "any",
+  "categories": ["food", "lifestyle", "utilities"],
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

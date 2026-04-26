@@ -5,6 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>PrepFresh &mdash; Recipe Scaler &amp; Unit Converter</title>
     <meta name="description" content="The must-have app for home cooks and meal preppers. Scale any recipe by servings. Convert between cups, grams, ml, oz instantly." />
+
+    <!-- PWA: makes the site installable on phones / tablets / desktops -->
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#d97706" />
+    <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+    <link rel="apple-touch-icon" href="/icon.svg" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="PrepFresh" />
+
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -137,5 +147,17 @@
     </div>
 
     <script src="app.js"></script>
+
+    <!-- Register the service worker so the site becomes an installable PWA.
+         Only runs on HTTPS (or localhost), so safe to include in dev too. -->
+    <script>
+      if ("serviceWorker" in navigator) {
+        window.addEventListener("load", () => {
+          navigator.serviceWorker
+            .register("/service-worker.js")
+            .catch((err) => console.warn("SW registration failed:", err));
+        });
+      }
+    </script>
   </body>
 </html>

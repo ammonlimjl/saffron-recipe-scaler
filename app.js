@@ -887,6 +887,11 @@ function renderOutput() {
 
   const parts = [];
 
+  if (parsed.image) {
+    parts.push(
+      `<div class="recipe__hero"><img class="recipe__image" src="${escapeHtml(parsed.image)}" alt="${escapeHtml(parsed.title || "Recipe photo")}" loading="lazy" referrerpolicy="no-referrer" /></div>`
+    );
+  }
   if (parsed.title) {
     parts.push(`<h2 class="recipe__title">${escapeHtml(parsed.title)}</h2>`);
   }
@@ -1114,7 +1119,7 @@ async function handleImportUrl() {
   if (!looksLikeURL(url)) return;
 
   btn.disabled = true;
-  btn.textContent = "Importing\u2026";
+  btn.innerHTML = '<span class="spinner" aria-hidden="true"></span>Importing\u2026';
   if (text) text.textContent = "Fetching recipe\u2026";
 
   try {
@@ -1129,6 +1134,14 @@ async function handleImportUrl() {
     input.value = recipeJsonToText(data);
     refreshFromInput();
     // Banner hides on its own — the textarea no longer just contains a URL.
+
+    // Attach the image to the parsed state and re-render so the recipe card
+    // gets a hero photo. (parseRecipe is text-only and discards image data;
+    // we splice the image back in after the refresh.)
+    if (data.image && state.parsed.hasContent) {
+      state.parsed.image = data.image;
+      renderOutput();
+    }
   } catch (err) {
     if (text) {
       text.textContent =

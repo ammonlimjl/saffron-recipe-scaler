@@ -868,39 +868,56 @@ function updateUnitToggleButtons() {
 }
 
 function renderOutput() {
+  // We now split the output card into three children that we manage
+  // independently so the scale-section sits BETWEEN head and body without
+  // being wiped on every render.
+  //   #output-placeholder — shown when no recipe is loaded
+  //   #recipe-head        — hero image, title, "Serves N"
+  //   #scale-section      — stable; never touched by this function
+  //   #recipe-body        — ingredient sections, Copy/Share, disclaimer
   const container = document.getElementById("output-section");
-  if (!container) return;
+  const placeholder = document.getElementById("output-placeholder");
+  const headEl = document.getElementById("recipe-head");
+  const bodyEl = document.getElementById("recipe-body");
+  if (!container || !headEl || !bodyEl) return;
 
   const parsed = state.parsed;
+
   if (!parsed.hasContent) {
     container.classList.remove("output-section--has-content");
-    container.innerHTML =
-      '<div class="output-section__placeholder">' +
-      '<svg class="placeholder__icon" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h18a9 9 0 0 1-18 0z"/><path d="M10 6c0 1-1 2-1 3M15 5c0 1-1 2-1 3"/></svg>' +
-      '<p class="placeholder__heading">Your recipe lands here.</p>' +
-      '<p class="placeholder__sub">Paste any recipe above, or tap <strong>Try a sample recipe</strong> to see PrepFresh in action.</p>' +
-      '</div>';
+    if (placeholder) placeholder.hidden = false;
+    headEl.hidden = true;
+    bodyEl.hidden = true;
+    headEl.innerHTML = "";
+    bodyEl.innerHTML = "";
     return;
   }
 
   container.classList.add("output-section--has-content");
+  if (placeholder) placeholder.hidden = true;
+  headEl.hidden = false;
+  bodyEl.hidden = false;
 
-  const parts = [];
-
+  // === HEAD: hero image, title, serves ===
+  const headParts = [];
   if (parsed.image) {
-    parts.push(
+    headParts.push(
       `<div class="recipe__hero"><img class="recipe__image" src="${escapeHtml(parsed.image)}" alt="${escapeHtml(parsed.title || "Recipe photo")}" loading="lazy" referrerpolicy="no-referrer" /></div>`
     );
   }
   if (parsed.title) {
-    parts.push(`<h2 class="recipe__title">${escapeHtml(parsed.title)}</h2>`);
+    headParts.push(`<h2 class="recipe__title">${escapeHtml(parsed.title)}</h2>`);
   }
   if (state.targetServings !== null) {
-    parts.push(`<p class="recipe__servings">Serves ${state.targetServings}</p>`);
+    headParts.push(`<p class="recipe__servings">Serves ${state.targetServings}</p>`);
   }
+  headEl.innerHTML = headParts.join("");
+
+  // === BODY: ingredient sections, Copy/Share, disclaimer ===
+  const bodyParts = [];
 
   if (parsed.sections.length === 0) {
-    parts.push(
+    bodyParts.push(
       '<div class="output-section__placeholder">No ingredients detected yet. Each ingredient line should start with a quantity (like "1 cup flour").</div>'
     );
   } else {
@@ -908,13 +925,13 @@ function renderOutput() {
 
     for (let s = 0; s < parsed.sections.length; s++) {
       const section = parsed.sections[s];
-      parts.push('<div class="recipe__section">');
+      bodyParts.push('<div class="recipe__section">');
       if (section.header) {
-        parts.push(
+        bodyParts.push(
           `<h3 class="recipe__section-header">${escapeHtml(section.header)}</h3>`
         );
       }
-      parts.push('<ul class="recipe__ingredients">');
+      bodyParts.push('<ul class="recipe__ingredients">');
 
       for (let i = 0; i < section.ingredients.length; i++) {
         const ing = section.ingredients[i];
@@ -945,7 +962,7 @@ function renderOutput() {
           unitHtml = `<span class="recipe__ing-unit">${escapeHtml(displayUnit || ing.unit || "")}</span>`;
         }
 
-        parts.push(
+        bodyParts.push(
           `<li class="recipe__ingredient">` +
             `<span class="recipe__ing-qty">${escapeHtml(formatQuantity(displayQty, displayUnit))}</span>` +
             unitHtml +
@@ -954,11 +971,11 @@ function renderOutput() {
         );
       }
 
-      parts.push("</ul>");
-      parts.push("</div>");
+      bodyParts.push("</ul>");
+      bodyParts.push("</div>");
     }
 
-    parts.push(
+    bodyParts.push(
       '<div class="recipe__actions">' +
         '<button type="button" class="btn btn--primary" data-action="copy">' +
           '<svg class="btn__icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>' +
@@ -970,12 +987,12 @@ function renderOutput() {
         '</button>' +
       '</div>'
     );
-    parts.push(
+    bodyParts.push(
       '<p class="recipe__disclaimer">Quantities are rounded for practical measurement.</p>'
     );
   }
 
-  container.innerHTML = parts.join("");
+  bodyEl.innerHTML = bodyParts.join("");
 }
 
 function refreshFromInput() {

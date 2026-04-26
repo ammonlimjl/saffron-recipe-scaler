@@ -229,18 +229,23 @@ body {
   background: #f4efe6;
 }
 
-/* Scale section — servings, units, reset.
-   Sits above the output card; scrolls naturally with the page (no sticky). */
+/* Scale section — nested INSIDE the recipe card, between the head (hero/
+   title/serves) and body (ingredients). Subtle amber tint differentiates
+   it from the white card without breaking the unified-card feel. */
 .scale-section {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-  padding: 16px 20px;
-  margin-bottom: 20px;
+  background: rgba(217, 119, 6, 0.05);
+  border: 1px solid rgba(217, 119, 6, 0.10);
+  border-radius: var(--radius-sm);
+  box-shadow: none;
+  padding: 14px 16px;
+  margin: 18px 0;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 12px;
+}
+
+.scale-section[hidden] {
+  display: none;
 }
 
 .scale-row {
@@ -505,7 +510,7 @@ body {
 }
 
 .recipe__servings {
-  margin: 0 0 20px;
+  margin: 0;
   color: var(--color-muted);
   font-size: 0.9rem;
 }

@@ -684,12 +684,20 @@ body {
 
 /* === Saved recipes UI === */
 
+/* Header action group: holds Saved + Install pills side-by-side */
+.header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  margin-top: 16px;
+}
+
 /* Header link to open saved-recipes modal */
 .header-link {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  margin-top: 16px;
   padding: 6px 12px;
   background: transparent;
   border: 1px solid var(--color-border);
@@ -700,6 +708,23 @@ body {
   font-weight: 500;
   color: var(--color-muted);
   transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease;
+}
+
+/* Install button: amber-tinted to read as the primary call-to-action */
+.header-link--install {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: white;
+}
+
+.header-link--install:hover {
+  background: #b45309;
+  border-color: #b45309;
+  color: white;
+}
+
+.header-link[hidden] {
+  display: none;
 }
 
 .header-link:hover {
@@ -947,4 +972,45 @@ body {
   padding: 8px 14px;
   font-size: 0.85rem;
   min-height: 36px;
+}
+
+/* iOS install instructions modal */
+.ios-install-steps {
+  list-style: none;
+  padding: 0;
+  margin: 18px 0 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  text-align: left;
+}
+
+.ios-install-steps li {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: var(--color-text);
+}
+
+.ios-install-steps__num {
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  background: var(--color-accent);
+  color: white;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.ios-install-steps__icon {
+  display: inline-block;
+  vertical-align: -4px;
+  margin: 0 2px;
+  color: var(--color-accent);
 }

@@ -1574,4 +1574,99 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   updateSavedCountBadge();
+
+  // === PWA install button ===
+  // Browsers that support installable PWAs (Chrome/Edge/Android) fire a
+  // `beforeinstallprompt` event when the site qualifies. We catch it, save
+  // the event for later, and show our own button. iOS Safari doesn't fire
+  // this event at all — for iOS we show a manual instructions modal.
+  setupInstallButton();
 });
+
+function setupInstallButton() {
+  const installBtn = document.getElementById("install-button");
+  const iosModal = document.getElementById("ios-install-modal");
+  const iosClose = document.getElementById("ios-install-close");
+  if (!installBtn) return;
+
+  // If the app is already running as an installed PWA, never show the button.
+  // `display-mode: standalone` is how the browser tells us "no browser chrome,
+  // running as an app". `navigator.standalone` is the iOS-specific equivalent.
+  const isStandalone =
+    window.matchMedia("(display-mode: standalone)").matches ||
+    window.navigator.standalone === true;
+  if (isStandalone) return;
+
+  // User-agent sniff for iOS. Not perfect but good enough for this purpose.
+  // We also exclude desktop Safari (which has a Mac-shaped UA) by checking
+  // for touch points.
+  const ua = window.navigator.userAgent;
+  const isIOS = /iPad|iPhone|iPod/.test(ua) ||
+    (ua.includes("Mac") && navigator.maxTouchPoints > 1);
+
+  // Check session-level dismissal so we don't keep nagging within one visit.
+  const dismissedThisSession = sessionStorage.getItem("prepfresh.installDismissed") === "1";
+
+  let deferredPrompt = null;
+
+  // --- Path 1: Chrome / Edge / Android Chrome (real install prompt) ---
+  window.addEventListener("beforeinstallprompt", (e) => {
+    // Stop the browser's mini-banner from appearing — we want our button instead.
+    e.preventDefault();
+    deferredPrompt = e;
+    if (!dismissedThisSession) {
+      installBtn.hidden = false;
+    }
+  });
+
+  // --- Path 2: iOS Safari (manual instructions modal) ---
+  if (isIOS && !dismissedThisSession) {
+    installBtn.hidden = false;
+  }
+
+  // Click handler: route to the real prompt or the iOS modal.
+  installBtn.addEventListener("click", async () => {
+    if (deferredPrompt) {
+      // Show the native install dialog.
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === "accepted") {
+        // Installed — hide forever (the `appinstalled` event fires too, but
+        // belt and braces).
+        installBtn.hidden = true;
+      } else {
+        // User dismissed — back off for this session.
+        installBtn.hidden = true;
+        sessionStorage.setItem("prepfresh.installDismissed", "1");
+      }
+      // The deferred event can only be used once.
+      deferredPrompt = null;
+    } else if (isIOS && iosModal) {
+      iosModal.hidden = false;
+      document.body.style.overflow = "hidden";
+    }
+  });
+
+  // Close the iOS modal (X-style — backdrop click + button + Escape all dismiss).
+  function closeIosModal() {
+    if (!iosModal) return;
+    iosModal.hidden = true;
+    document.body.style.overflow = "";
+  }
+  if (iosClose) iosClose.addEventListener("click", closeIosModal);
+  if (iosModal) {
+    iosModal.addEventListener("click", (e) => {
+      if (e.target === iosModal) closeIosModal();
+    });
+  }
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") closeIosModal();
+  });
+
+  // When the app actually gets installed (Chrome fires this event), hide the
+  // button permanently for this device.
+  window.addEventListener("appinstalled", () => {
+    installBtn.hidden = true;
+    deferredPrompt = null;
+  });
+}

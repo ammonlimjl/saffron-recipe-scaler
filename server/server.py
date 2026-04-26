@@ -1,5 +1,5 @@
 """
-Saffron — backend service.
+PrepFresh — backend service.
 Phase 2, Sub-step 2: adds /import endpoint that fetches recipe pages.
 
 Run locally:
@@ -102,7 +102,7 @@ def get_ingredient_groups(scraper):
 def index():
     """Root endpoint — confirms the server is alive."""
     return jsonify({
-        "service": "Saffron backend",
+        "service": "PrepFresh backend",
         "status": "ok",
         "message": "Hello from Python!",
     })
@@ -149,7 +149,7 @@ def import_recipe():
         return jsonify({
             "error": (
                 "Couldn't find a recipe on that page. Try pasting the "
-                "ingredient text into Saffron manually."
+                "ingredient text into PrepFresh manually."
             ),
         }), 422
 
@@ -172,7 +172,7 @@ def import_recipe():
         return jsonify({
             "error": (
                 "Couldn't find recipe ingredients on that page. Try pasting "
-                "the ingredient text into Saffron manually."
+                "the ingredient text into PrepFresh manually."
             ),
         }), 422
 

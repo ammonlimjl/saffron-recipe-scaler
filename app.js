@@ -1,4 +1,4 @@
-// Saffron — recipe scaler & unit converter.
+// PrepFresh — recipe scaler & unit converter.
 // Pipeline: parse pasted recipe → scale by servings → convert units →
 // render with copy/share + Pro upsell hooks.
 
@@ -878,7 +878,7 @@ function renderOutput() {
       '<div class="output-section__placeholder">' +
       '<svg class="placeholder__icon" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h18a9 9 0 0 1-18 0z"/><path d="M10 6c0 1-1 2-1 3M15 5c0 1-1 2-1 3"/></svg>' +
       '<p class="placeholder__heading">Your recipe lands here.</p>' +
-      '<p class="placeholder__sub">Paste any recipe above, or tap <strong>Try a sample recipe</strong> to see Saffron in action.</p>' +
+      '<p class="placeholder__sub">Paste any recipe above, or tap <strong>Try a sample recipe</strong> to see PrepFresh in action.</p>' +
       '</div>';
     return;
   }
@@ -1034,12 +1034,12 @@ function handleIngredientUnitChange(e) {
   renderOutput();
 }
 
-// Backend URL — points to local dev server. When deployed, swap this to the
-// hosted backend (e.g., https://saffron-backend.onrender.com).
+// Backend URL — local Flask dev server when running from file:// or
+// localhost; the deployed Railway service otherwise (used by Netlify build).
 const BACKEND_URL =
   location.hostname === "localhost" || location.protocol === "file:"
     ? "http://localhost:5000"
-    : "http://localhost:5000"; // TODO: replace with deployed backend URL
+    : "https://saffron-recipe-scaler-production.up.railway.app";
 
 const URL_UPSELL_DEFAULT_TEXT =
   "Recipe URL detected. Tap Import to fetch it automatically.";
@@ -1143,7 +1143,7 @@ async function handleImportUrl() {
 
 // Appended to every Copy / Share. Single source of truth so brand changes
 // (or future "remove branding" Pro feature) only touch one line.
-const SHARE_TAGLINE = "Scaled with Saffron";
+const SHARE_TAGLINE = "Scaled with PrepFresh";
 
 function buildPlainTextRecipe() {
   if (!state.parsed.hasContent) return "";

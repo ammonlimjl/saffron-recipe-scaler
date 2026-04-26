@@ -995,6 +995,10 @@ function renderOutput() {
 
     bodyParts.push(
       '<div class="recipe__actions">' +
+        '<button type="button" class="btn btn--secondary" data-action="save">' +
+          '<svg class="btn__icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/></svg>' +
+          '<span class="btn__label">Save</span>' +
+        '</button>' +
         '<button type="button" class="btn btn--primary" data-action="copy">' +
           '<svg class="btn__icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>' +
           '<span class="btn__label">Copy all</span>' +
@@ -1204,6 +1208,76 @@ async function handleImportUrl() {
 // (or future "remove branding" Pro feature) only touch one line.
 const SHARE_TAGLINE = "Scaled with PrepFresh";
 
+// === Saved recipes (localStorage, free-tier 5-save limit) ===
+const SAVED_RECIPES_KEY = "prepfresh.saved_recipes";
+const FREE_SAVE_LIMIT = 5;
+
+function getSavedRecipes() {
+  try {
+    const raw = localStorage.getItem(SAVED_RECIPES_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+function setSavedRecipes(list) {
+  try {
+    localStorage.setItem(SAVED_RECIPES_KEY, JSON.stringify(list));
+  } catch (e) {
+    // localStorage may be full or disabled; surface a generic error.
+    console.warn("Couldn't save recipes:", e);
+  }
+}
+
+function saveCurrentRecipe() {
+  if (!state.parsed.hasContent) return { ok: false, reason: "no-recipe" };
+  const list = getSavedRecipes();
+  if (list.length >= FREE_SAVE_LIMIT) {
+    return { ok: false, reason: "limit-reached", count: list.length };
+  }
+  const entry = {
+    id: String(Date.now()) + "-" + Math.random().toString(36).slice(2, 7),
+    title: state.parsed.title || "Untitled recipe",
+    image: state.parsed.image || "",
+    savedAt: new Date().toISOString(),
+    parsed: state.parsed,
+    targetServings: state.targetServings,
+    unitSystem: state.unitSystem,
+    unitOverrides: state.unitOverrides,
+  };
+  list.unshift(entry);
+  setSavedRecipes(list);
+  return { ok: true, count: list.length };
+}
+
+function loadSavedRecipe(id) {
+  const list = getSavedRecipes();
+  const entry = list.find((r) => r.id === id);
+  if (!entry) return false;
+
+  state.parsed = entry.parsed;
+  state.originalServings = entry.parsed.servings;
+  state.targetServings = entry.targetServings;
+  state.unitSystem = entry.unitSystem || "original";
+  state.unitOverrides = entry.unitOverrides || {};
+
+  // Reflect in the textarea so the user can see what was loaded.
+  const input = document.getElementById("recipe-input");
+  if (input) input.value = "";  // Clear paste box; saved recipe is now the source of truth.
+
+  updateScaleControls();
+  updateUnitToggleButtons();
+  updateUrlUpsell();
+  renderOutput();
+  return true;
+}
+
+function deleteSavedRecipe(id) {
+  const list = getSavedRecipes().filter((r) => r.id !== id);
+  setSavedRecipes(list);
+}
+
 function buildPlainTextRecipe() {
   if (!state.parsed.hasContent) return "";
 
@@ -1299,12 +1373,136 @@ async function handleShare() {
   handleCopyAll();
 }
 
+// === Save / Saved-recipes UI ===
+
+function handleSaveRecipe() {
+  const result = saveCurrentRecipe();
+  const btn = document.querySelector('[data-action="save"]');
+  if (!btn) return;
+  const label = btn.querySelector(".btn__label") || btn;
+
+  if (result.ok) {
+    label.textContent = "Saved!";
+    setTimeout(() => { label.textContent = "Save"; }, 1500);
+    updateSavedCountBadge();
+  } else if (result.reason === "limit-reached") {
+    showSaveLimitDialog();
+  }
+}
+
+function updateSavedCountBadge() {
+  const badge = document.getElementById("saved-count");
+  if (!badge) return;
+  const count = getSavedRecipes().length;
+  badge.textContent = String(count);
+  badge.dataset.count = String(count);
+}
+
+function openSavedModal() {
+  const modal = document.getElementById("saved-modal");
+  if (!modal) return;
+  renderSavedRecipesList();
+  modal.hidden = false;
+  document.body.style.overflow = "hidden";
+}
+
+function closeSavedModal() {
+  const modal = document.getElementById("saved-modal");
+  if (!modal) return;
+  modal.hidden = true;
+  document.body.style.overflow = "";
+}
+
+function showSaveLimitDialog() {
+  const modal = document.getElementById("limit-modal");
+  if (!modal) return;
+  modal.hidden = false;
+  document.body.style.overflow = "hidden";
+}
+
+function closeSaveLimitDialog() {
+  const modal = document.getElementById("limit-modal");
+  if (!modal) return;
+  modal.hidden = true;
+  document.body.style.overflow = "";
+}
+
+function renderSavedRecipesList() {
+  const body = document.getElementById("saved-modal-body");
+  const countEl = document.getElementById("saved-count-footer");
+  if (!body) return;
+
+  const list = getSavedRecipes();
+
+  if (list.length === 0) {
+    body.innerHTML =
+      '<p class="modal__empty">No saved recipes yet. Click <strong>Save</strong> on any recipe to keep it here.</p>';
+    if (countEl) countEl.textContent = `0 of ${FREE_SAVE_LIMIT} free saves used`;
+    return;
+  }
+
+  const items = list
+    .map((entry) => {
+      const date = new Date(entry.savedAt).toLocaleDateString();
+      const thumb = entry.image
+        ? `<img class="saved-item__image" src="${escapeHtml(entry.image)}" alt="" loading="lazy" referrerpolicy="no-referrer" />`
+        : '<div class="saved-item__placeholder" aria-hidden="true">' +
+            '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h18a9 9 0 0 1-18 0z"/><path d="M10 6c0 1-1 2-1 3M15 5c0 1-1 2-1 3"/></svg>' +
+          '</div>';
+      return (
+        `<article class="saved-item" data-id="${escapeHtml(entry.id)}">` +
+          thumb +
+          '<div class="saved-item__details">' +
+            `<h3 class="saved-item__title">${escapeHtml(entry.title)}</h3>` +
+            `<p class="saved-item__date">${escapeHtml(date)}</p>` +
+          '</div>' +
+          '<div class="saved-item__actions">' +
+            '<button type="button" class="btn btn--secondary btn--small" data-saved-action="open">Open</button>' +
+            '<button type="button" class="saved-item__delete" data-saved-action="delete" aria-label="Delete">' +
+              '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>' +
+            '</button>' +
+          '</div>' +
+        '</article>'
+      );
+    })
+    .join("");
+
+  body.innerHTML = items;
+  if (countEl) {
+    countEl.textContent = `${list.length} of ${FREE_SAVE_LIMIT} free saves used`;
+  }
+}
+
+function handleSavedItemAction(e) {
+  const btn = e.target.closest("[data-saved-action]");
+  if (!btn) return;
+  const item = btn.closest(".saved-item");
+  if (!item) return;
+  const id = item.dataset.id;
+  const action = btn.dataset.savedAction;
+
+  if (action === "open") {
+    if (loadSavedRecipe(id)) {
+      closeSavedModal();
+      const output = document.getElementById("output-section");
+      if (output) output.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  } else if (action === "delete") {
+    if (confirm("Delete this saved recipe?")) {
+      deleteSavedRecipe(id);
+      renderSavedRecipesList();
+      updateSavedCountBadge();
+    }
+  }
+}
+
 function handleOutputAction(e) {
   const btn = e.target.closest("[data-action]");
   if (!btn) return;
   const action = btn.dataset.action;
   if (action === "copy") handleCopyAll();
   else if (action === "share") handleShare();
+  else if (action === "save") handleSaveRecipe();
 }
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -1340,9 +1538,40 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Sync banner / scale visibility to current textarea state on load.
   updateUrlUpsell();
-  // Delegate dropdown changes and Copy/Share clicks from the output container.
+  // Delegate dropdown changes and Save/Copy/Share clicks from the output container.
   if (outputSection) {
     outputSection.addEventListener("change", handleIngredientUnitChange);
     outputSection.addEventListener("click", handleOutputAction);
   }
+
+  // Saved recipes UI
+  const savedBtn = document.getElementById("saved-button");
+  const savedModal = document.getElementById("saved-modal");
+  const savedClose = document.getElementById("saved-modal-close");
+  const savedBody = document.getElementById("saved-modal-body");
+  const limitModal = document.getElementById("limit-modal");
+  const limitClose = document.getElementById("limit-close");
+
+  if (savedBtn) savedBtn.addEventListener("click", openSavedModal);
+  if (savedClose) savedClose.addEventListener("click", closeSavedModal);
+  if (limitClose) limitClose.addEventListener("click", closeSaveLimitDialog);
+  if (savedBody) savedBody.addEventListener("click", handleSavedItemAction);
+
+  // Click backdrop or hit Escape to dismiss either modal
+  [savedModal, limitModal].forEach((m) => {
+    if (!m) return;
+    m.addEventListener("click", (e) => {
+      if (e.target === m) {
+        m.hidden = true;
+        document.body.style.overflow = "";
+      }
+    });
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "Escape") return;
+    closeSavedModal();
+    closeSaveLimitDialog();
+  });
+
+  updateSavedCountBadge();
 });

@@ -19,6 +19,13 @@
         <h1>PrepFresh</h1>
         <p class="tagline">Scale any recipe. Convert any unit.</p>
         <p class="strapline">The must-have app for home cooks and meal preppers.</p>
+        <button type="button" class="header-link" id="saved-button" aria-label="Open saved recipes">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/>
+          </svg>
+          <span>Saved</span>
+          <span class="header-link__count" id="saved-count" data-count="0">0</span>
+        </button>
       </header>
 
       <section class="paste-section" aria-label="Paste recipe">
@@ -98,6 +105,36 @@
         <div class="recipe__body" id="recipe-body" hidden></div>
       </section>
     </main>
+
+    <!-- Saved recipes modal -->
+    <div class="modal-overlay" id="saved-modal" hidden>
+      <div class="modal" role="dialog" aria-labelledby="saved-modal-title" aria-modal="true">
+        <header class="modal__header">
+          <h2 id="saved-modal-title" class="modal__title">Saved recipes</h2>
+          <button type="button" class="modal__close" id="saved-modal-close" aria-label="Close">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+          </button>
+        </header>
+        <div class="modal__body" id="saved-modal-body">
+          <!-- list rendered by JS -->
+        </div>
+        <footer class="modal__footer">
+          <p class="modal__count" id="saved-count-footer">0 of 5 free saves used</p>
+        </footer>
+      </div>
+    </div>
+
+    <!-- Save limit reached dialog -->
+    <div class="modal-overlay" id="limit-modal" hidden>
+      <div class="modal modal--small" role="dialog" aria-modal="true">
+        <h2 class="modal__title">You&apos;ve reached 5 saved recipes</h2>
+        <p class="modal__copy">The free tier includes 5 saves. Upgrade to <strong>PrepFresh Pro</strong> for unlimited saves, cloud sync across devices, and instant URL imports on every site.</p>
+        <p class="modal__sub">Pro is coming soon. For now, delete a saved recipe to make room.</p>
+        <div class="modal__actions">
+          <button type="button" class="btn btn--primary" id="limit-close">Got it</button>
+        </div>
+      </div>
+    </div>
 
     <script src="app.js"></script>
   </body>

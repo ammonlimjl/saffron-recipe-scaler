@@ -4,4 +4,5 @@ requests>=2.31
 curl_cffi>=0.7
 recipe-scrapers>=15.0
 gunicorn>=21.0
+beautifulsoup4>=4.12
 

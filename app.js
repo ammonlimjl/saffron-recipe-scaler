@@ -899,10 +899,27 @@ function renderOutput() {
     return;
   }
 
+  // Capture this BEFORE we flip hidden so we know whether this is the first
+  // render after an empty state (fresh appearance worth animating) vs a
+  // re-render from a unit/serving change (no animation — would be jarring).
+  const isFreshAppearance = headEl.hidden;
+
   container.classList.add("output-section--has-content");
   if (placeholder) placeholder.hidden = true;
   headEl.hidden = false;
   bodyEl.hidden = false;
+
+  if (isFreshAppearance) {
+    const scaleSection = document.getElementById("scale-section");
+    [headEl, bodyEl, scaleSection].forEach((el) => {
+      if (el) el.classList.add("is-fresh");
+    });
+    setTimeout(() => {
+      [headEl, bodyEl, scaleSection].forEach((el) => {
+        if (el) el.classList.remove("is-fresh");
+      });
+    }, 400);
+  }
 
   // === HEAD: hero image, title, serves ===
   const headParts = [];
@@ -1052,6 +1069,9 @@ function handleReset() {
   const servingsInput = document.getElementById("servings-input");
   if (servingsInput) {
     servingsInput.value = state.originalServings === null ? "" : state.originalServings;
+    // Brief amber pulse so the user sees the value snap back to original.
+    servingsInput.classList.add("is-pulse");
+    setTimeout(() => servingsInput.classList.remove("is-pulse"), 550);
   }
   updateUnitToggleButtons();
   renderOutput();
@@ -1346,6 +1366,9 @@ async function handleCopyAll() {
   try {
     await navigator.clipboard.writeText(text);
     label.textContent = "Copied!";
+    // Brief bounce so the success registers visually, not just textually.
+    btn.classList.add("is-flash");
+    setTimeout(() => btn.classList.remove("is-flash"), 400);
   } catch (err) {
     label.textContent = "Copy failed";
   }
@@ -1383,6 +1406,8 @@ function handleSaveRecipe() {
 
   if (result.ok) {
     label.textContent = "Saved!";
+    btn.classList.add("is-flash");
+    setTimeout(() => btn.classList.remove("is-flash"), 400);
     setTimeout(() => { label.textContent = "Save"; }, 1500);
     updateSavedCountBadge();
   } else if (result.reason === "limit-reached") {

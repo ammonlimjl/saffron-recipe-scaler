@@ -404,6 +404,85 @@ body {
   font-weight: 600;
 }
 
+/* "How it works" 3-step strip (empty-state value prop) */
+.how-it-works__eyebrow {
+  margin: 0 0 18px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
+
+.how-it-works {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 22px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+
+.how-it-works__step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 14px 8px;
+  border-radius: var(--radius-sm);
+  background: rgba(217, 119, 6, 0.04);
+  transition: background-color 200ms ease, transform 200ms ease;
+}
+
+.how-it-works__step:hover {
+  background: rgba(217, 119, 6, 0.08);
+  transform: translateY(-2px);
+}
+
+.how-it-works__num {
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  background: var(--color-accent);
+  color: white;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.how-it-works__title {
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.how-it-works__sub {
+  font-size: 0.78rem;
+  color: var(--color-muted);
+  text-align: center;
+  line-height: 1.35;
+}
+
+@media (max-width: 480px) {
+  .how-it-works {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  .how-it-works__step {
+    flex-direction: row;
+    justify-content: flex-start;
+    text-align: left;
+    padding: 10px 14px;
+    gap: 12px;
+  }
+  .how-it-works__sub {
+    text-align: left;
+  }
+}
+
 /* Output section — has-content state (parsed recipe) */
 .output-section--has-content {
   border-style: solid;
@@ -1013,4 +1092,49 @@ body {
   vertical-align: -4px;
   margin: 0 2px;
   color: var(--color-accent);
+}
+
+/* === Micro-interactions === */
+
+/* Recipe fade-up: applied once when content first appears (JS removes the
+   class after the animation completes). */
+@keyframes recipeFadeUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.is-fresh {
+  animation: recipeFadeUp 320ms ease-out;
+}
+
+/* Servings input pulse — brief amber glow when the value changes,
+   so the user knows the change registered. */
+@keyframes inputPulse {
+  0%   { box-shadow: 0 0 0 0 rgba(217, 119, 6, 0.45); }
+  60%  { box-shadow: 0 0 0 6px rgba(217, 119, 6, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(217, 119, 6, 0); }
+}
+
+.is-pulse {
+  animation: inputPulse 500ms ease-out;
+}
+
+/* Button flash — brief bounce on Copy / Save success. */
+@keyframes btnFlash {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.06); }
+  100% { transform: scale(1); }
+}
+
+.is-flash {
+  animation: btnFlash 360ms ease-out;
+}
+
+/* Respect users who've asked the OS to reduce motion (accessibility). */
+@media (prefers-reduced-motion: reduce) {
+  .is-fresh,
+  .is-pulse,
+  .is-flash {
+    animation: none;
+  }
 }

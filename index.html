@@ -56,7 +56,7 @@
           id="recipe-input"
           class="paste-section__input"
           rows="10"
-          placeholder="Paste a recipe here — text or a recipe URL. We'll fetch and parse it for you."
+          placeholder="Got a recipe? Drop the link or paste the text. We'll handle the math."
           spellcheck="false"
         ></textarea>
         <div class="url-upsell" id="url-upsell" hidden>
@@ -81,12 +81,25 @@
 
       <section class="output-section" id="output-section" aria-live="polite">
         <div class="output-section__placeholder" id="output-placeholder">
-          <svg class="placeholder__icon" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M3 12h18a9 9 0 0 1-18 0z"/>
-            <path d="M10 6c0 1-1 2-1 3M15 5c0 1-1 2-1 3"/>
-          </svg>
-          <p class="placeholder__heading">Your recipe lands here.</p>
-          <p class="placeholder__sub">Paste any recipe above, or tap <strong>Try a sample recipe</strong> to see PrepFresh in action.</p>
+          <p class="how-it-works__eyebrow">How it works</p>
+          <ol class="how-it-works">
+            <li class="how-it-works__step">
+              <span class="how-it-works__num">1</span>
+              <strong class="how-it-works__title">Paste</strong>
+              <span class="how-it-works__sub">a recipe link or text</span>
+            </li>
+            <li class="how-it-works__step">
+              <span class="how-it-works__num">2</span>
+              <strong class="how-it-works__title">Adjust</strong>
+              <span class="how-it-works__sub">servings &amp; units</span>
+            </li>
+            <li class="how-it-works__step">
+              <span class="how-it-works__num">3</span>
+              <strong class="how-it-works__title">Cook</strong>
+              <span class="how-it-works__sub">with confidence</span>
+            </li>
+          </ol>
+          <p class="placeholder__sub">Or tap <strong>Try a sample recipe</strong> to see it in action.</p>
         </div>
 
         <div class="recipe__head" id="recipe-head" hidden></div>

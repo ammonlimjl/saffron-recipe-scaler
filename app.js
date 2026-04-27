@@ -652,12 +652,19 @@ function normalizeFractions(text) {
   return text.replace(UNICODE_FRACTION_REGEX, (m) => " " + UNICODE_FRACTIONS[m] + " ");
 }
 
+// Per-line max length for cleanInput. Real cooking instructions can be very
+// long on detail-rich recipes (Adam Liaw's chicken rice has 940-char steps).
+// We keep a cap purely to protect against pathological blog rambles; 2500
+// is well above any realistic cooking step but still drops giant story
+// paragraphs that occasionally leak through.
+const MAX_LINE_LENGTH = 2500;
+
 function cleanInput(text) {
   if (!text) return "";
   return normalizeFractions(text)
     .split(/\r?\n/)
     .map((line) => line.replace(/\s+/g, " ").trim())
-    .filter((line) => line && line.length <= 500 && !JUNK_PATTERNS.some((re) => re.test(line)))
+    .filter((line) => line && line.length <= MAX_LINE_LENGTH && !JUNK_PATTERNS.some((re) => re.test(line)))
     .join("\n");
 }
 

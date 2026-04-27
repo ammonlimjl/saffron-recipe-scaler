@@ -120,6 +120,32 @@ INSTRUCTION_HEADER_RE = re.compile(
     r"^\s*(method|instructions?|directions?|preparation|steps?|how to make|to cook|to make)\s*$",
     re.I,
 )
+# Common cooking-step verbs. If a short item contains NONE of these, it's
+# almost certainly an image caption that snuck into the <ol> rather than a
+# real instruction. (Real short steps like "Bake at 350°F for 30 minutes."
+# still pass because they contain "bake".)
+INSTRUCTION_VERB_RE = re.compile(
+    r"\b("
+    r"add|bake|beat|blend|boil|break|bring|broil|brown|brush|chill|chop|combine|"
+    r"cook|cool|cover|cut|deglaze|dice|divide|drain|drizzle|drop|dry|dust|fill|"
+    r"flip|fold|fry|garnish|glaze|grate|grease|grill|heat|knead|layer|let|line|"
+    r"make|marinate|mash|measure|melt|microwave|mince|mix|pat|peel|place|poach|"
+    r"pop|pound|pour|preheat|press|prick|pulse|puree|reduce|refrigerate|remove|"
+    r"repeat|reserve|return|rinse|roast|roll|rub|saute|scoop|scrape|sear|season|"
+    r"separate|serve|set|shake|simmer|skim|slice|smear|soak|spoon|spread|"
+    r"sprinkle|squeeze|steam|stir|strain|stuff|take|taste|temper|toast|toss|"
+    r"transfer|turn|use|using|wait|warm|wash|whip|whisk|wrap"
+    r")\b",
+    re.I,
+)
+
+
+def _looks_like_caption(text):
+    """Detect instruction items that are actually image captions or labels
+    (e.g., "Family-style chicken rice."). Heuristic: short text with no
+    recognizable cooking verb. Errs on the side of keeping items — real
+    short instructions like "Bake for 30 minutes" still pass."""
+    return len(text) < 40 and not INSTRUCTION_VERB_RE.search(text)
 # Match "Serves 4", "Makes 12", "Yields 6", "Serves 4-6" — the leading-digit
 # group is what we keep. Used to both pull servings out and filter the line
 # out of the ingredient list.
@@ -258,11 +284,13 @@ def heuristic_parse(html, page_url=""):
     )
     ingredients, extracted_servings = _filter_ingredient_items(raw_ingredients)
 
-    # Instructions — same heading-then-list pattern.
+    # Instructions — same heading-then-list pattern, then strip out any
+    # caption-shaped items that snuck into the <ol> (image labels etc.).
     instructions = []
     for tag in soup.find_all(["h1", "h2", "h3", "h4", "h5"]):
         if INSTRUCTION_HEADER_RE.match(tag.get_text(strip=True)):
-            instructions = _items_from_list_after(tag)
+            raw_steps = _items_from_list_after(tag)
+            instructions = [s for s in raw_steps if not _looks_like_caption(s)]
             if instructions:
                 break
 

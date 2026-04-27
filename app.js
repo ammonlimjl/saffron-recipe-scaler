@@ -665,6 +665,9 @@ function isLikelyTitle(line) {
   if (/^\d/.test(line)) return false;
   if (/:\s*$/.test(line)) return false;
   if (line.length > 100) return false;
+  // URLs are never recipe titles — defends against the case where a user
+  // pastes a URL and hasn't imported it yet.
+  if (/^https?:\/\//i.test(line.trim())) return false;
   if (/^(ingredients?|instructions?|directions?|method|preparation|steps?|how to make|notes?|tips?|equipment)\s*:?\s*$/i.test(line)) return false;
   return true;
 }
@@ -788,7 +791,11 @@ function parseRecipe(rawText) {
   if (currentSection.ingredients.length > 0) {
     sections.push(currentSection);
   }
-  return { title, servings, sections, instructions, hasContent: true };
+  // Only treat the input as a real recipe if we actually extracted ingredients
+  // OR cooking steps. A title alone (or worse — a bare URL the user pasted but
+  // hasn't imported yet) shouldn't render a phantom recipe card.
+  const hasContent = sections.length > 0 || instructions.length > 0;
+  return { title, servings, sections, instructions, hasContent };
 }
 
 function formatQuantity(q, unit) {
@@ -1214,14 +1221,35 @@ async function handleImportUrl() {
     }
   } catch (err) {
     if (text) {
-      text.textContent =
-        err.message && err.message.length < 200
-          ? err.message
-          : "Couldn't import that recipe. Try pasting the ingredients manually.";
+      text.textContent = friendlyImportError(err);
     }
     btn.textContent = "Try again";
     btn.disabled = false;
   }
+}
+
+// Maps the various ways a fetch can fail into a single user-friendly line.
+// "Failed to fetch" is what browsers say when the network call dies before
+// any HTTP response arrives — that's almost always a temporary blip
+// (cold-start delay, dropped wifi, momentary backend hiccup), so we nudge
+// the user to retry rather than blaming them.
+function friendlyImportError(err) {
+  const msg = (err && err.message) || "";
+  if (/failed to fetch|networkerror|load failed/i.test(msg)) {
+    return "Couldn't reach the recipe server. Check your connection and tap Try again.";
+  }
+  if (/timeout|timed out/i.test(msg)) {
+    return "That site took too long to respond. Tap Try again, or paste the ingredients manually.";
+  }
+  if (/404|not found/i.test(msg)) {
+    return "That URL didn't load. Double-check the link and try again.";
+  }
+  if (/no recipe|couldn't find/i.test(msg)) {
+    return "Couldn't find a recipe on that page. Try pasting the ingredient text into PrepFresh manually.";
+  }
+  // Server returned a known error message that's short enough to show.
+  if (msg && msg.length < 160) return msg;
+  return "Couldn't import that recipe. Try pasting the ingredients manually.";
 }
 
 // Appended to every Copy / Share. Single source of truth so brand changes
